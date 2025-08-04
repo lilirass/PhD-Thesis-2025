@@ -1,0 +1,250 @@
+&GLOBAL
+  PROJECT Fe2O3_Water_MD
+  RUN_TYPE MD
+  IOLEVEL MEDIUM
+  EXTENDED_FFT_LENGTHS T
+&END GLOBAL
+
+&FORCE_EVAL
+  METHOD Quickstep
+  &DFT
+    BASIS_SET_FILE_NAME BASIS_MOLOPT
+    POTENTIAL_FILE_NAME POTENTIAL
+    WFN_RESTART_FILE_NAME Fe2O3_geo-RESTART.wfn
+    CHARGE 0
+    MULTIPLICITY 1
+    &PRINT
+      !&PLUS_U 
+       !&EACH
+        !QS_SCF 1
+       !&END EACH
+      !&END PLUS_U
+      !&PDOS SILENT
+        !COMPONENTS T
+        !NLUMO  -1
+      !&END PDOS
+      !&MO_CUBES
+        !NLUMO -1
+        !NHOMO 30
+        !WRITE_CUBE .TRUE.
+        !STRIDE 2 2 1
+      !&END
+      &MULLIKEN  ON
+      &END MULLIKEN
+      !&HIRSHFELD  OFF
+      !&END HIRSHFELD
+    &END PRINT
+      UKS    .TRUE.
+      PLUS_U_METHOD MULLIKEN
+    &MGRID
+       CUTOFF [Ry] 700
+       NGRIDS 4
+       REL_CUTOFF 60
+    &END
+    &QS
+       METHOD GPW
+       EPS_DEFAULT 1.0E-14
+       EXTRAPOLATION ASPC
+       !EXTRAPOLATION USE_GUESS ! required for K-Point sampling
+    &END
+    &POISSON
+      PERIODIC XYZ
+      !PSOLVER MT
+    &END POISSON
+    &SCF
+      SCF_GUESS RESTART
+      MAX_SCF 700
+      EPS_SCF 1.0E-6
+      MAX_ITER_LUMO 1000
+      EPS_LUMO 1.0E-5
+      EPS_DIIS   1.00000000E-003
+      &OT T
+        MINIMIZER  DIIS
+        PRECONDITIONER  FULL_ALL
+      &END OT
+      &OUTER_SCF T
+        EPS_SCF 1.0E-5
+        MAX_SCF 100
+      &END OUTER_SCF
+      !ADDED_MOS  100
+       !&DIAGONALIZATION  T
+         !ALGORITHM  STANDARD
+       !&END DIAGONALIZATION
+       !&MIXING  T
+         !METHOD  BROYDEN_MIXING
+         !ALPHA     0.5
+         !NBUFFER  8
+       !&END MIXING
+    &END SCF
+    &XC
+      &XC_FUNCTIONAL PBE
+      &END XC_FUNCTIONAL
+      &VDW_POTENTIAL
+            POTENTIAL_TYPE PAIR_POTENTIAL
+         &PAIR_POTENTIAL
+            PARAMETER_FILE_NAME dftd3.dat
+            TYPE DFTD3
+            REFERENCE_FUNCTIONAL PBE
+            R_CUTOFF [angstrom] 25
+         &END
+      &END VDW_POTENTIAL
+    &END XC
+  &END DFT
+  &SUBSYS
+    &CELL
+      PERIODIC XYZ
+      A  10.0660314560         0.0000000000         0.0000000000
+      B  -5.0330136805         8.7170359926         0.0000000000
+      C   0.0028619521         0.0060767550        50.2170443811
+      MULTIPLE_UNIT_CELL 1 1 1
+    &END CELL
+    &TOPOLOGY
+      COORD_FILE_NAME  hematite-water.xyz
+      COORD_FILE_FORMAT XYZ
+      MULTIPLE_UNIT_CELL 1 1 1
+    &END
+     &KIND  O
+         ELEMENT O
+         BASIS_SET DZVP-MOLOPT-SR-GTH
+         POTENTIAL GTH-PBE-q6
+         &DFT_PLUS_U
+          L 1
+          U_MINUS_J [eV] 2.0
+         &END DFT_PLUS_U
+         &BS
+           &ALPHA
+            NEL +2
+            L    1
+            N    2
+           &END ALPHA
+           &BETA
+            NEL +2
+            L    1
+            N    2
+           &END BETA
+         &END BS
+      &END KIND
+      &KIND  O_H
+         ELEMENT O
+         BASIS_SET DZVP-MOLOPT-SR-GTH
+         POTENTIAL GTH-PBE-q6
+         &DFT_PLUS_U
+          L 1
+          U_MINUS_J [eV] 2.0
+         &END DFT_PLUS_U
+         &BS
+           &ALPHA
+            NEL +2
+            L    1
+            N    2
+           &END ALPHA
+           &BETA
+            NEL +2
+            L    1
+            N    2
+           &END BETA
+         &END BS
+      &END KIND
+    &KIND  Fe1
+      ELEMENT Fe
+      BASIS_SET DZVP-MOLOPT-SR-GTH
+      POTENTIAL GTH-PBE-q16
+      &DFT_PLUS_U
+        L 2
+        U_MINUS_J [eV] 3.0
+        &ENFORCE_OCCUPATION
+         EPS_SCF 1.0E-5
+         MAX_SCF 20
+         ORBITALS -2 -1 +0 +1 +2
+         SMEAR on
+        &END ENFORCE_OCCUPATION
+       &END DFT_PLUS_U
+       &BS
+         &ALPHA
+           NEL +4 -2
+           L    2  0
+           N    3  4
+         &END ALPHA
+         &BETA
+           NEL -6 -2
+           L    2  0
+           N    3  4
+         &END BETA
+        &END BS
+    &END KIND
+     &KIND  Fe2
+       ELEMENT Fe
+       BASIS_SET DZVP-MOLOPT-SR-GTH
+       POTENTIAL GTH-PBE-q16
+       &DFT_PLUS_U
+         L 2
+         U_MINUS_J [eV] 3.0
+         &ENFORCE_OCCUPATION
+           EPS_SCF 1.0E-5
+           MAX_SCF 20
+           ORBITALS -2 -1 +0 +1 +2
+           SMEAR on
+         &END ENFORCE_OCCUPATION
+       &END DFT_PLUS_U
+       &BS
+         &ALPHA
+           NEL -6 -2
+           L    2  0
+           N    3  4
+         &END ALPHA
+         &BETA
+           NEL +4 -2
+           L    2  0
+           N    3  4
+         &END BETA
+       &END BS
+     &END KIND
+     &KIND  HW
+        ELEMENT H
+        BASIS_SET DZVP-MOLOPT-SR-GTH
+        POTENTIAL GTH-PBE-q1
+      &END KIND
+      &KIND  H
+        ELEMENT H
+        BASIS_SET DZVP-MOLOPT-SR-GTH
+        POTENTIAL GTH-PBE-q1
+      &END KIND
+      &KIND  OW
+        ELEMENT O
+        BASIS_SET DZVP-MOLOPT-SR-GTH
+        POTENTIAL GTH-PBE-q6
+      &END KIND
+  &END SUBSYS 
+&END FORCE_EVAL 
+&MOTION
+ &MD
+   ENSEMBLE NVT
+   TEMPERATURE [K] 300
+   TIMESTEP [fs] 1.0
+   STEPS 7000
+   &THERMOSTAT
+     REGION GLOBAL
+     TYPE CSVR
+	 &CSVR
+	   TIMECON 200
+	 &END
+   &END THERMOSTAT
+ &END
+ &PRINT
+   &TRAJECTORY
+     &EACH
+       MD 1
+     &END EACH
+   &END TRAJECTORY
+   &VELOCITIES ON
+   &END VELOCITIES
+   &FORCES ON
+   &END FORCES
+   &RESTART
+     BACKUP_COPIES 1
+     &EACH
+       MD 1
+     &END EACH
+   &END RESTART
+ &END PRINT 
+&END 

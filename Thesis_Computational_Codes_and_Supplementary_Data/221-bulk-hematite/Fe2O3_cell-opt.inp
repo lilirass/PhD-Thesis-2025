@@ -1,0 +1,262 @@
+
+@SET RESTART 0
+!@SET RUNTYPE GEO_OPT
+@SET RUNTYPE CELL_OPT
+@SET EPSSCF 1E-06
+
+
+&FORCE_EVAL
+  !This one is used for cell optimization
+  STRESS_TENSOR ANALYTICAL
+  METHOD QS
+  &DFT  
+     UKS
+     BASIS_SET_FILE_NAME  BASIS_MOLOPT
+     POTENTIAL_FILE_NAME  POTENTIAL
+     WFN_RESTART_FILE_NAME Fe2O3_scf-RESTART.wfn
+     CHARGE 0
+     MULTIPLICITY  1
+     PLUS_U_METHOD MULLIKEN
+    &MGRID
+      CUTOFF 700
+      NGRIDS   16
+      REL_CUTOFF   60
+    &END MGRID
+    &POISSON
+        PERIODIC XYZ
+    &END POISSON
+    &QS
+       !EPS_DEFAULT 1.0E-12
+       EPS_DEFAULT 1.000E-14
+       METHOD GPW
+       !MAP_CONSISTENT
+       EXTRAPOLATION ASPC
+    &END QS
+     &SCF
+       MAX_SCF    700 
+       EPS_SCF    ${EPSSCF}
+       SCF_GUESS  RESTART
+       !ADDED_MOS 50
+       &OT
+        MINIMIZER  DIIS
+        PRECONDITIONER  FULL_ALL
+       &END
+       &OUTER_SCF
+         MAX_SCF 20
+         EPS_SCF ${EPSSCF}
+       &END
+       !&DIAGONALIZATION ON
+          !ALGORITHM STANDARD
+          !EPS_ADAPT 0.01
+       !&END DIAGONALIZATION
+       !&SMEAR  ON
+            !METHOD FERMI_DIRAC
+            !ELECTRONIC_TEMPERATURE [K] 500
+       !&END SMEAR
+       !&MIXING
+         !ALPHA 0.5
+         !BETA  0.5
+         !METHOD BROYDEN_MIXING
+         !NBROYDEN 8
+       !&END MIXING
+       &PRINT
+         &RESTART
+           &EACH
+               JUST_ENERGY 1
+           &END
+           ADD_LAST NUMERIC
+         &END
+       &END
+     &END SCF
+
+     &XC
+      !&XC_FUNCTIONAL BLYP
+      &XC_FUNCTIONAL PBE
+         !&PBE
+         !&END PBE
+      &END XC_FUNCTIONAL
+     &END XC
+   &PRINT
+    &MULLIKEN ON
+    &END
+    &HIRSHFELD OFF
+    &END
+    !&PLUS_U 
+       !&EACH
+        !QS_SCF 1
+       !&END EACH
+      !&END PLUS_U
+      !&PDOS SILENT
+        !COMPONENTS T
+        !NLUMO  -1
+      !&END PDOS
+      !&MO_CUBES
+        !NLUMO -1
+        !NHOMO 30
+        !WRITE_CUBE .FALSE.
+        !STRIDE 2 2 1
+      !&END
+   &END PRINT
+  &END DFT
+
+  &SUBSYS
+    &CELL
+      A   5.054   0.000   0.000
+      B  -2.527   4.377   0.000
+      C  -0.002   0.001   13.724
+      PERIODIC  XYZ 
+      MULTIPLE_UNIT_CELL 2 2 1
+    &END CELL
+    &TOPOLOGY
+      CONNECTIVITY OFF
+      COORD_FILE_NAME 221-opt-geo-u-on-Fe.xyz 
+      COORD_FILE_FORMAT XYZ
+      MULTIPLE_UNIT_CELL 2 2 1
+      ! Only in case you use cif file
+      !&GENERATE
+      !  REORDER T
+      !&END
+    &END TOPOLOGY
+    &KIND  O
+         ELEMENT O
+         BASIS_SET DZVP-MOLOPT-SR-GTH
+         POTENTIAL GTH-PBE-q6
+         &DFT_PLUS_U
+          L 1
+          U_MINUS_J [eV] 2.0
+         &END DFT_PLUS_U
+         &BS
+           &ALPHA
+            NEL +2  
+            L    1   
+            N    2   
+           &END ALPHA
+           &BETA
+            NEL +2  
+            L    1   
+            N    2   
+           &END BETA
+         &END BS
+    &END KIND
+    &KIND  Fe1
+         ELEMENT Fe
+         BASIS_SET DZVP-MOLOPT-SR-GTH
+         POTENTIAL GTH-PBE-q16
+         &DFT_PLUS_U 
+          L 2
+          U_MINUS_J [eV] 3.0
+          &ENFORCE_OCCUPATION
+           EPS_SCF 1.0E-5
+           MAX_SCF 20 
+           ORBITALS -2 -1 +0 +1 +2 
+          SMEAR on
+          &END ENFORCE_OCCUPATION
+         &END DFT_PLUS_U
+         &BS
+           &ALPHA
+            NEL +4 -2  
+            L    2  0   
+            N    3  4   
+           &END ALPHA
+           &BETA
+            NEL -6 -2  
+            L    2  0   
+            N    3  4   
+           &END BETA
+         &END BS
+    &END KIND
+    &KIND  Fe2
+         ELEMENT Fe
+         BASIS_SET DZVP-MOLOPT-SR-GTH
+         POTENTIAL GTH-PBE-q16
+         &DFT_PLUS_U
+          L 2
+          U_MINUS_J [eV] 3.0
+          &ENFORCE_OCCUPATION
+           EPS_SCF 1.0E-5
+           MAX_SCF 20 
+           ORBITALS -2 -1 +0 +1 +2 
+          SMEAR on
+          &END ENFORCE_OCCUPATION
+         &END DFT_PLUS_U
+         &BS
+           &ALPHA
+            NEL -6 -2  
+            L    2  0   
+            N    3  4   
+           &END ALPHA
+           &BETA
+            NEL +4 -2  
+            L    2  0   
+            N    3  4   
+           &END BETA
+         &END BS
+    &END KIND
+  &END SUBSYS
+ &END FORCE_EVAL
+
+&MOTION
+  &CELL_OPT
+    TYPE DIRECT_CELL_OPT
+    MAX_DR    0.002       
+    MAX_FORCE 3.0E-04
+    RMS_DR    0.002
+    RMS_FORCE 3.0E-04
+    PRESSURE_TOLERANCE 100
+    EXTERNAL_PRESSURE [bar] 100 0 0 0 100 0 0 0 100
+    MAX_ITER 550
+    OPTIMIZER BFGS
+    ! It is better to let the optimizer change the cell as is needed
+    !KEEP_SYMMETRY .TRUE. will make the optimization harder.
+    KEEP_SYMMETRY .FALSE.
+ &END CELL_OPT
+
+  &GEO_OPT
+    !OPTIMIZER CG
+    OPTIMIZER BFGS
+    MAX_ITER  550
+    MAX_DR    [bohr] 0.002
+    MAX_FORCE 3.000E-4
+    RMS_DR    [bohr] 0.002
+    RMS_FORCE 3.000E-4
+    &BFGS
+    &END
+    !&CG
+       !&LINE_SEARCH
+         !TYPE 2PNT
+       !&END
+    !&END
+  &END 
+  !&PRINT
+  !&TRAJECTORY
+    !&EACH
+      !GEO_OPT 1
+    !&END EACH
+  !&END TRAJECTORY
+  !&FORCES ON
+  !&END FORCES
+  !&STRESS ON
+  !&END
+  !&RESTART
+    !BACKUP_COPIES 1
+    !&EACH
+      !GEO_OPT 1
+    !&END EACH
+  !&END RESTART
+ !&END PRINT
+&END MOTION
+
+&GLOBAL
+  PROJECT_NAME Fe2O3_geo
+  RUN_TYPE ${RUNTYPE}
+  PRINT_LEVEL MEDIUM
+  EXTENDED_FFT_LENGTHS 
+  FLUSH_SHOULD_FLUSH T   
+&END GLOBAL
+
+@if ${RESTART} == 1
+&EXT_RESTART
+  RESTART_FILE_NAME ${PROJECT}-1.restart
+  RESTART_DEFAULT T
+&END EXT_RESTART
+@endif
